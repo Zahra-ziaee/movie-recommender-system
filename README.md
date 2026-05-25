@@ -228,6 +228,15 @@ Note: Ranking evaluation is currently performed using sampled candidate items fo
 
 ## How to Run
 
+## Streamlit Demo
+
+Run the interactive recommendation demo:
+
+```bash
+streamlit run app/streamlit_app.py
+
+The demo allows users to enter a user ID and generate Top-N movie recommendations using the hybrid CASM-CF and Matrix Factorization recommender.
+
 ### 1. Clone the repository
 
 ```bash
