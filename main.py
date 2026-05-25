@@ -3,6 +3,7 @@ from src.data_loader import load_thesis_data
 from src.evaluation import OptimizedLightningEvaluator
 from src.recommender import CompleteThesisRecommender
 from src.utils import save_experiment_results
+from src.visualization import save_experiment_charts
 
 
 def main():
@@ -66,6 +67,12 @@ def main():
         rating_results=rating_results,
         ranking_results=ranking_results,
         output_path="results/metrics.csv",
+    )
+
+    save_experiment_charts(
+        rating_results=rating_results,
+        ranking_results=ranking_results,
+        output_dir="results/figures",
     )
 
 
