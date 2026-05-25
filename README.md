@@ -214,6 +214,18 @@ Ranking evaluation results:
 
 The hybrid model improved rating prediction compared with the earlier CASM-only version. The system now combines confidence-aware collaborative filtering, baseline bias prediction, matrix factorization, and incremental update logic.
 
+### Result Visualizations
+
+Rating prediction metrics:
+
+![Rating Metrics](results/figures/rating_metrics.png)
+
+Ranking metrics at K=10:
+
+![Ranking Metrics at K=10](results/figures/ranking_metrics_at_10.png)
+
+Note: Ranking evaluation is currently performed using sampled candidate items for faster execution.
+
 ## How to Run
 
 ### 1. Clone the repository
