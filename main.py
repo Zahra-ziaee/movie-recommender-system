@@ -2,10 +2,12 @@ from src.config import DATASET_CONFIGS
 from src.data_loader import load_thesis_data
 from src.evaluation import OptimizedLightningEvaluator
 from src.recommender import CompleteThesisRecommender
+from src.utils import save_experiment_results
 
 
 def main():
     config = DATASET_CONFIGS["100K"]
+    model_name = "Hybrid CASM-CF + Matrix Factorization"
 
     print("=" * 60)
     print("Movie Recommender System - Hybrid Thesis Portfolio Version")
@@ -57,6 +59,14 @@ def main():
         rating=5.0,
     )
     print("Incremental update test completed successfully.")
+
+    save_experiment_results(
+        dataset_name=config["name"],
+        model_name=model_name,
+        rating_results=rating_results,
+        ranking_results=ranking_results,
+        output_path="results/metrics.csv",
+    )
 
 
 if __name__ == "__main__":
