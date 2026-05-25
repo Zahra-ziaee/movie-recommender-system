@@ -23,12 +23,12 @@ def main():
     recommender.fit(train_df)
     print("Training finished.")
 
-    print("\nEvaluating rating prediction...")
     evaluator = OptimizedLightningEvaluator(
         k_values=config["k_values"],
         relevance_threshold=config["relevance_threshold"],
     )
 
+    print("\nEvaluating rating prediction...")
     rating_results = evaluator.rating_evaluation(
         recommender,
         test_df,
@@ -37,6 +37,17 @@ def main():
 
     print("\nRating prediction results:")
     for key, value in rating_results.items():
+        print(f"{key}: {value}")
+
+    print("\nEvaluating ranking quality...")
+    ranking_results = evaluator.ranking_evaluation(
+        recommender,
+        test_df,
+        sample_users=50,
+    )
+
+    print("\nRanking evaluation results:")
+    for key, value in ranking_results.items():
         print(f"{key}: {value}")
 
 
