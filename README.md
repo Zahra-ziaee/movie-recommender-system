@@ -226,11 +226,11 @@ For MovieLens 10M, the full dataset statistics are reported, while training and 
 
 ### Ranking Results at K=10
 
-| Dataset | Precision@10 | Recall@10 | NDCG@10 | MRR@10 | F1@10 | Evaluated Users |
-|---|---:|---:|---:|---:|---:|---:|
-| MovieLens 100K | 0.0340 | 0.0238 | 0.0481 | 0.1560 | 0.0242 | 50 |
-| MovieLens 1M | 0.0100 | 0.0206 | 0.0222 | 0.0540 | 0.0111 | 50 |
-| MovieLens 10M | 0.0650 | 0.3381 | 0.2201 | 0.2342 | 0.0998 | 20 |
+| Dataset | Precision@10 | Recall@10 | NDCG@10 | MRR@10 | F1@10 | Evaluated Users | Eligible Users |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| MovieLens 100K | 0.1080 | 0.0779 | 0.1269 | 0.2343 | 0.0767 | 50 | 920 |
+| MovieLens 1M | 0.2020 | 0.1471 | 0.2208 | 0.3660 | 0.1433 | 50 | 5,994 |
+| MovieLens 10M | 0.0650 | 0.3381 | 0.2201 | 0.2342 | 0.0998 | 20 | 17,120 |
 
 ### MovieLens 10M Scalable Evaluation Setup
 
@@ -345,6 +345,7 @@ The file includes:
 - MAE
 - Ranking metrics
 - Evaluated users
+- Eligible users
 
 This makes the project easier to reproduce, compare, and extend.
 
