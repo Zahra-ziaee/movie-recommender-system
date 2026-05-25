@@ -8,7 +8,7 @@ def main():
     config = DATASET_CONFIGS["100K"]
 
     print("=" * 60)
-    print("Movie Recommender System - Thesis Portfolio Version")
+    print("Movie Recommender System - Hybrid Thesis Portfolio Version")
     print("=" * 60)
 
     train_df, test_df, dataset_info = load_thesis_data(config)
@@ -18,10 +18,10 @@ def main():
     for key, value in dataset_info.items():
         print(f"{key}: {value}")
 
-    print("\nTraining recommender model...")
+    print("\nTraining hybrid recommender model...")
     recommender = CompleteThesisRecommender(config)
     recommender.fit(train_df)
-    print("Training finished.")
+    print("Hybrid recommender training finished.")
 
     evaluator = OptimizedLightningEvaluator(
         k_values=config["k_values"],
@@ -49,6 +49,14 @@ def main():
     print("\nRanking evaluation results:")
     for key, value in ranking_results.items():
         print(f"{key}: {value}")
+
+    print("\nTesting incremental update...")
+    recommender.add_rating_incremental(
+        user_id=1,
+        item_id=50,
+        rating=5.0,
+    )
+    print("Incremental update test completed successfully.")
 
 
 if __name__ == "__main__":

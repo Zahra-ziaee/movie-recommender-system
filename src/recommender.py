@@ -4,23 +4,31 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
+from src.matrix_factorization import MatrixFactorizationSGD
 from src.similarity import CASMSimilarityEngine
 
 
 class CompleteThesisRecommender:
     """
-    Thesis-based recommender system.
+    Thesis-based hybrid recommender system.
 
     Main components:
     - CASM-based collaborative filtering
     - Baseline bias prediction
+    - Matrix Factorization with SGD
+    - Hybrid CF + MF prediction
     - Incremental cache invalidation
-    - Top-N recommendation generation
+    - Lightweight latent factor update
     """
 
     def __init__(self, config: Dict):
         self.config = config
+
         self.k_neighbors = config.get("k_neighbors", 25)
+
+        self.baseline_weight = config.get("baseline_weight", 0.30)
+        self.cf_weight = config.get("cf_weight", 0.35)
+        self.mf_weight = config.get("mf_weight", 0.35)
 
         self.global_mean = 0.0
         self.user_ratings = defaultdict(dict)
@@ -31,6 +39,14 @@ class CompleteThesisRecommender:
 
         self.casm_engine = CASMSimilarityEngine(
             cache_size=config.get("cache_size", 200000)
+        )
+
+        self.mf_model = MatrixFactorizationSGD(
+            n_factors=config.get("n_factors", 25),
+            learning_rate=config.get("learning_rate", 0.005),
+            reg_lambda=config.get("reg_lambda", 0.02),
+            max_epochs=config.get("max_epochs", 15),
+            random_state=config.get("random_state", 42),
         )
 
     def fit(self, train_df: pd.DataFrame):
@@ -45,6 +61,10 @@ class CompleteThesisRecommender:
             self.item_ratings[item_id][user_id] = rating
 
         self._compute_biases(train_df)
+
+        print("\nTraining Matrix Factorization model...")
+        self.mf_model.fit(train_df)
+        print("Matrix Factorization training finished.")
 
         return self
 
@@ -61,6 +81,15 @@ class CompleteThesisRecommender:
             int(item_id): float(item_mean - self.global_mean)
             for item_id, item_mean in item_means.items()
         }
+
+    def baseline_predict(self, user_id: int, item_id: int) -> float:
+        prediction = (
+            self.global_mean
+            + self.user_biases.get(user_id, 0.0)
+            + self.item_biases.get(item_id, 0.0)
+        )
+
+        return float(np.clip(prediction, 0.5, 5.0))
 
     def find_similar_users(self, user_id: int) -> List[Tuple[int, float]]:
         if user_id not in self.user_ratings:
@@ -90,13 +119,7 @@ class CompleteThesisRecommender:
 
         return similarities[:self.k_neighbors]
 
-    def predict_rating(self, user_id: int, item_id: int) -> float:
-        baseline_prediction = (
-            self.global_mean
-            + self.user_biases.get(user_id, 0.0)
-            + self.item_biases.get(item_id, 0.0)
-        )
-
+    def collaborative_filtering_predict(self, user_id: int, item_id: int) -> float:
         similar_users = self.find_similar_users(user_id)
 
         weighted_sum = 0.0
@@ -109,10 +132,20 @@ class CompleteThesisRecommender:
                 weight_sum += abs(similarity)
 
         if weight_sum > 0:
-            cf_prediction = weighted_sum / weight_sum
-            final_prediction = 0.6 * baseline_prediction + 0.4 * cf_prediction
-        else:
-            final_prediction = baseline_prediction
+            return float(np.clip(weighted_sum / weight_sum, 0.5, 5.0))
+
+        return self.baseline_predict(user_id, item_id)
+
+    def predict_rating(self, user_id: int, item_id: int) -> float:
+        baseline_prediction = self.baseline_predict(user_id, item_id)
+        cf_prediction = self.collaborative_filtering_predict(user_id, item_id)
+        mf_prediction = self.mf_model.predict(user_id, item_id)
+
+        final_prediction = (
+            self.baseline_weight * baseline_prediction
+            + self.cf_weight * cf_prediction
+            + self.mf_weight * mf_prediction
+        )
 
         return float(np.clip(final_prediction, 0.5, 5.0))
 
@@ -164,10 +197,24 @@ class CompleteThesisRecommender:
         """
         Incremental update mechanism.
 
-        Only the affected user-item structures and related similarity cache
-        entries are updated.
+        Updates:
+        - user-item interaction dictionary
+        - item-user interaction dictionary
+        - CASM similarity cache for the affected user
+        - MF latent factors for the affected user-item pair
         """
+        user_id = int(user_id)
+        item_id = int(item_id)
+        rating = float(rating)
+
         self.user_ratings[user_id][item_id] = rating
         self.item_ratings[item_id][user_id] = rating
 
         self.casm_engine.invalidate_user_cache(user_id)
+
+        self.mf_model.update_single_interaction(
+            user_id=user_id,
+            item_id=item_id,
+            rating=rating,
+            n_steps=3,
+        )
