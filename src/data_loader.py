@@ -42,6 +42,23 @@ def compute_dataset_statistics(df: pd.DataFrame) -> Dict:
     }
 
 
+def sample_if_needed(
+    df: pd.DataFrame,
+    max_rows,
+    random_state: int,
+) -> pd.DataFrame:
+    if max_rows is None:
+        return df
+
+    if len(df) <= max_rows:
+        return df
+
+    return df.sample(
+        n=max_rows,
+        random_state=random_state,
+    ).reset_index(drop=True)
+
+
 def load_thesis_data(config: Dict) -> Tuple[pd.DataFrame, pd.DataFrame, Dict]:
     data_path = Path(config["data_path"])
 
@@ -53,6 +70,8 @@ def load_thesis_data(config: Dict) -> Tuple[pd.DataFrame, pd.DataFrame, Dict]:
     ratings = pd.read_csv(data_path)
     ratings = standardize_columns(ratings)
 
+    dataset_info = compute_dataset_statistics(ratings)
+
     train_df, test_df = train_test_split(
         ratings,
         test_size=config.get("test_size", 0.2),
@@ -60,6 +79,19 @@ def load_thesis_data(config: Dict) -> Tuple[pd.DataFrame, pd.DataFrame, Dict]:
         shuffle=True,
     )
 
-    dataset_info = compute_dataset_statistics(ratings)
+    train_df = sample_if_needed(
+        train_df,
+        max_rows=config.get("max_train_rows"),
+        random_state=config.get("random_state", 42),
+    )
+
+    test_df = sample_if_needed(
+        test_df,
+        max_rows=config.get("max_test_rows"),
+        random_state=config.get("random_state", 42),
+    )
+
+    dataset_info["train_rows_used"] = len(train_df)
+    dataset_info["test_rows_used"] = len(test_df)
 
     return train_df, test_df, dataset_info

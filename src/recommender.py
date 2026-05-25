@@ -52,14 +52,14 @@ class CompleteThesisRecommender:
     def fit(self, train_df: pd.DataFrame):
         self.global_mean = float(train_df["rating"].mean())
 
-        for _, row in train_df.iterrows():
-            user_id = int(row["userId"])
-            item_id = int(row["movieId"])
-            rating = float(row["rating"])
+        for row in train_df[["userId", "movieId", "rating"]].itertuples(index=False):
+            user_id = int(row.userId)
+            item_id = int(row.movieId)
+            rating = float(row.rating)
 
             self.user_ratings[user_id][item_id] = rating
             self.item_ratings[item_id][user_id] = rating
-
+            
         self._compute_biases(train_df)
 
         print("\nTraining Matrix Factorization model...")
