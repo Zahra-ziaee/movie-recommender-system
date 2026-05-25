@@ -118,10 +118,10 @@ class OptimizedLightningEvaluator:
         predictions = []
         actuals = []
 
-        for _, row in sample_df.iterrows():
-            user_id = int(row["userId"])
-            item_id = int(row["movieId"])
-            actual_rating = float(row["rating"])
+        for row in sample_df[["userId", "movieId", "rating"]].itertuples(index=False):
+            user_id = int(row.userId)
+            item_id = int(row.movieId)
+            actual_rating = float(row.rating)
 
             predicted_rating = recommender.predict_rating(user_id, item_id)
 
@@ -134,24 +134,118 @@ class OptimizedLightningEvaluator:
             "sample_size": len(sample_df),
         }
 
+    def _build_candidate_items(
+        self,
+        recommender,
+        user_id: int,
+        relevant_items: Set[int],
+        candidate_sample_size: int,
+    ) -> List[int]:
+        """
+        Build candidate set using relevant test items plus sampled negative items.
+
+        This prevents ranking evaluation from becoming all-zero just because
+        relevant items were not sampled as candidates.
+        """
+        seen_items = set(recommender.user_ratings.get(user_id, {}).keys())
+        all_items = list(recommender.item_ratings.keys())
+
+        valid_relevant_items = [
+            int(item_id)
+            for item_id in relevant_items
+            if int(item_id) not in seen_items
+        ]
+
+        negative_candidates = [
+            int(item_id)
+            for item_id in all_items
+            if int(item_id) not in seen_items
+            and int(item_id) not in relevant_items
+        ]
+
+        rng = np.random.default_rng(seed=42 + int(user_id))
+
+        negative_sample_size = min(
+            candidate_sample_size,
+            len(negative_candidates),
+        )
+
+        if negative_sample_size > 0:
+            sampled_negatives = rng.choice(
+                negative_candidates,
+                size=negative_sample_size,
+                replace=False,
+            ).astype(int).tolist()
+        else:
+            sampled_negatives = []
+
+        candidate_items = valid_relevant_items + sampled_negatives
+
+        return list(dict.fromkeys(candidate_items))
+
     def ranking_evaluation(
         self,
         recommender,
         test_df,
         sample_users: int = 50,
+        candidate_sample_size: int = 300,
     ) -> Dict:
         """
         Evaluate recommendation ranking quality.
 
         Relevant items are defined as:
         rating >= relevance_threshold
+
+        Candidate set:
+        relevant test items + sampled negative items
+
+        Important:
+        In large sampled datasets, a user may exist in test but not in the
+        sampled training set. Those users are skipped because the recommender
+        cannot generate personalized recommendations for unseen users.
         """
-        user_group_sizes = test_df.groupby("userId").size()
-        eligible_users = user_group_sizes[user_group_sizes >= 2].index.to_numpy()
+        relevant_test = test_df[test_df["rating"] >= self.relevance_threshold]
+
+        users_in_model = set(recommender.user_ratings.keys())
+
+        eligible_users = []
+
+        for user_id, group in relevant_test.groupby("userId"):
+            user_id = int(user_id)
+
+            if user_id not in users_in_model:
+                continue
+
+            seen_items = set(recommender.user_ratings.get(user_id, {}).keys())
+
+            relevant_items = set(group["movieId"].astype(int).tolist())
+            relevant_items = {
+                item_id for item_id in relevant_items
+                if item_id not in seen_items
+            }
+
+            if relevant_items:
+                eligible_users.append(user_id)
 
         if len(eligible_users) == 0:
             return {
-                "evaluated_users": 0
+                "precision@5": 0.0,
+                "recall@5": 0.0,
+                "ndcg@5": 0.0,
+                "mrr@5": 0.0,
+                "f1@5": 0.0,
+                "precision@10": 0.0,
+                "recall@10": 0.0,
+                "ndcg@10": 0.0,
+                "mrr@10": 0.0,
+                "f1@10": 0.0,
+                "precision@20": 0.0,
+                "recall@20": 0.0,
+                "ndcg@20": 0.0,
+                "mrr@20": 0.0,
+                "f1@20": 0.0,
+                "evaluated_users": 0,
+                "eligible_users": 0,
             }
 
         rng = np.random.default_rng(seed=42)
@@ -173,19 +267,36 @@ class OptimizedLightningEvaluator:
             for user_id in selected_users:
                 user_test = test_df[test_df["userId"] == user_id]
 
+                seen_items = set(recommender.user_ratings.get(int(user_id), {}).keys())
+
                 relevant_items = set(
                     user_test[
                         user_test["rating"] >= self.relevance_threshold
                     ]["movieId"].astype(int).tolist()
                 )
 
+                relevant_items = {
+                    item_id for item_id in relevant_items
+                    if item_id not in seen_items
+                }
+
                 if not relevant_items:
+                    continue
+
+                candidate_items = self._build_candidate_items(
+                    recommender=recommender,
+                    user_id=int(user_id),
+                    relevant_items=relevant_items,
+                    candidate_sample_size=candidate_sample_size,
+                )
+
+                if not candidate_items:
                     continue
 
                 recommended_items = recommender.recommend_items(
                     int(user_id),
                     n_items=k,
-                    candidate_sample_size=300,
+                    candidate_items=candidate_items,
                 )
 
                 precision = precision_at_k(
@@ -233,5 +344,6 @@ class OptimizedLightningEvaluator:
             )
 
         results["evaluated_users"] = len(selected_users)
+        results["eligible_users"] = len(eligible_users)
 
         return results

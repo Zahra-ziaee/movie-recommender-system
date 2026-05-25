@@ -68,6 +68,7 @@ def main():
         recommender,
         test_df,
         sample_users=config["ranking_sample_users"],
+        candidate_sample_size=config["candidate_sample_size"],
     )
 
     print("\nRanking evaluation results:")

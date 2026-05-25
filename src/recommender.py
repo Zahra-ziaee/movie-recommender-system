@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 import numpy as np
 import pandas as pd
@@ -59,7 +59,7 @@ class CompleteThesisRecommender:
 
             self.user_ratings[user_id][item_id] = rating
             self.item_ratings[item_id][user_id] = rating
-            
+
         self._compute_biases(train_df)
 
         print("\nTraining Matrix Factorization model...")
@@ -154,34 +154,44 @@ class CompleteThesisRecommender:
         user_id: int,
         n_items: int = 10,
         candidate_sample_size: int = 300,
+        candidate_items: Optional[List[int]] = None,
     ) -> List[int]:
         """
         Generate top-N item recommendations for a user.
 
-        To keep evaluation efficient, this method scores a sample of unseen items
-        instead of scoring the entire item catalog.
+        If candidate_items is provided, recommendations are generated only from
+        that candidate set. This is useful for ranking evaluation with relevant
+        items + sampled negative items.
         """
         if user_id not in self.user_ratings:
             return []
 
         seen_items = set(self.user_ratings[user_id].keys())
-        all_items = list(self.item_ratings.keys())
 
-        candidate_items = [
-            item_id for item_id in all_items
-            if item_id not in seen_items
-        ]
+        if candidate_items is None:
+            all_items = list(self.item_ratings.keys())
+
+            candidate_items = [
+                item_id for item_id in all_items
+                if item_id not in seen_items
+            ]
+
+            if len(candidate_items) > candidate_sample_size:
+                rng = np.random.default_rng(seed=42)
+                candidate_items = rng.choice(
+                    candidate_items,
+                    size=candidate_sample_size,
+                    replace=False,
+                ).tolist()
+        else:
+            candidate_items = [
+                int(item_id)
+                for item_id in candidate_items
+                if int(item_id) not in seen_items
+            ]
 
         if not candidate_items:
             return []
-
-        if len(candidate_items) > candidate_sample_size:
-            rng = np.random.default_rng(seed=42)
-            candidate_items = rng.choice(
-                candidate_items,
-                size=candidate_sample_size,
-                replace=False,
-            ).tolist()
 
         scored_items = []
 
