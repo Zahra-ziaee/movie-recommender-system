@@ -171,7 +171,7 @@ The project includes an incremental update mechanism. When a new rating is added
 
 ## Current Results on MovieLens 100K
 
-The current implementation was tested on the MovieLens 100K dataset.
+The current hybrid implementation was tested on the MovieLens 100K dataset.
 
 Dataset statistics:
 
@@ -188,33 +188,31 @@ Rating prediction results:
 
 | Metric | Value |
 |---|---:|
-| RMSE | 0.9189 |
-| MAE | 0.7297 |
+| RMSE | 0.9061 |
+| MAE | 0.7195 |
 | Sample size | 1,000 |
 
 Ranking evaluation results:
 
 | Metric | Value |
 |---|---:|
-| Precision@5 | 0.0280 |
-| Recall@5 | 0.0096 |
-| NDCG@5 | 0.0208 |
-| MRR@5 | 0.0363 |
-| F1@5 | 0.0130 |
-| Precision@10 | 0.0260 |
-| Recall@10 | 0.0197 |
-| NDCG@10 | 0.0237 |
-| MRR@10 | 0.0487 |
-| F1@10 | 0.0190 |
-| Precision@20 | 0.0280 |
-| Recall@20 | 0.0384 |
-| NDCG@20 | 0.0321 |
-| MRR@20 | 0.0581 |
-| F1@20 | 0.0291 |
+| Precision@5 | 0.0440 |
+| Recall@5 | 0.0136 |
+| NDCG@5 | 0.0557 |
+| MRR@5 | 0.1407 |
+| F1@5 | 0.0188 |
+| Precision@10 | 0.0340 |
+| Recall@10 | 0.0238 |
+| NDCG@10 | 0.0481 |
+| MRR@10 | 0.1560 |
+| F1@10 | 0.0242 |
+| Precision@20 | 0.0330 |
+| Recall@20 | 0.0472 |
+| NDCG@20 | 0.0535 |
+| MRR@20 | 0.1613 |
+| F1@20 | 0.0336 |
 
-Note: Ranking evaluation is currently performed using sampled candidate items for faster execution. Future versions will include improved candidate generation and matrix factorization integration.
-
----
+The hybrid model improved rating prediction compared with the earlier CASM-only version. The system now combines confidence-aware collaborative filtering, baseline bias prediction, matrix factorization, and incremental update logic.
 
 ## How to Run
 
