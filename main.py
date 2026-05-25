@@ -1,3 +1,5 @@
+import argparse
+
 from src.config import DATASET_CONFIGS
 from src.data_loader import load_thesis_data
 from src.evaluation import OptimizedLightningEvaluator
@@ -6,13 +8,32 @@ from src.utils import save_experiment_results
 from src.visualization import save_experiment_charts
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Run the hybrid CASM-CF + Matrix Factorization recommender."
+    )
+
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default="100K",
+        choices=["100K", "1M", "10M"],
+        help="Dataset version to use: 100K, 1M, or 10M.",
+    )
+
+    return parser.parse_args()
+
+
 def main():
-    config = DATASET_CONFIGS["100K"]
+    args = parse_args()
+
+    config = DATASET_CONFIGS[args.dataset]
     model_name = "Hybrid CASM-CF + Matrix Factorization"
 
     print("=" * 60)
     print("Movie Recommender System - Hybrid Thesis Portfolio Version")
     print("=" * 60)
+    print(f"Selected dataset: {config['name']}")
 
     train_df, test_df, dataset_info = load_thesis_data(config)
 
@@ -35,7 +56,7 @@ def main():
     rating_results = evaluator.rating_evaluation(
         recommender,
         test_df,
-        sample_size=1000,
+        sample_size=config["rating_sample_size"],
     )
 
     print("\nRating prediction results:")
@@ -46,7 +67,7 @@ def main():
     ranking_results = evaluator.ranking_evaluation(
         recommender,
         test_df,
-        sample_users=50,
+        sample_users=config["ranking_sample_users"],
     )
 
     print("\nRanking evaluation results:")
