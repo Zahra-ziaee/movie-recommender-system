@@ -1,49 +1,160 @@
-# Scalable Movie Recommendation System with CASM
+# Movie Recommender System
 
-A thesis-based recommender system project built with Python, focusing on scalable collaborative filtering, confidence-aware similarity, matrix factorization, incremental updates, and recommender-system evaluation.
+A thesis-based movie recommendation system built with Collaborative Filtering, Confidence-Aware Similarity Measure, Matrix Factorization, Hybrid Prediction, Incremental Update Logic, and Streamlit demo.
 
-This project is based on my MSc thesis on scalable recommender systems using incremental collaborative filtering. The goal is to transform the academic implementation into a clean, modular, GitHub-ready data science project.
+This project is based on the concepts developed in my MSc thesis on incremental collaborative filtering recommender systems.
 
 ---
 
 ## Project Overview
 
-Recommender systems are widely used in digital platforms to reduce information overload and personalize user experience. Traditional collaborative filtering methods, however, face challenges when the data is large, sparse, and dynamic.
+Recommender systems help users discover relevant items by learning from historical user-item interactions.
 
-This project implements a hybrid recommender system based on:
+This project implements a movie recommendation system using the MovieLens dataset and combines multiple recommendation techniques:
 
-- Collaborative Filtering
-- Confidence-Aware Similarity Measure (CASM)
+- User-based Collaborative Filtering
+- Confidence-Aware Similarity Measure
 - Matrix Factorization with SGD
-- Hybrid CF + MF rating prediction
-- Baseline bias prediction
+- Hybrid CF + MF prediction
 - Incremental update logic
 - Rating prediction evaluation
-- Ranking quality evaluation
-- Experiment tracking
-- Result visualizations
-- Streamlit demo
+- Ranking recommendation evaluation
+- Streamlit demo application
 
-The system supports MovieLens 100K, MovieLens 1M, and MovieLens 10M through a configurable dataset setup.
+The project focuses on both recommendation accuracy and scalability concepts.
 
 ---
 
-## Main Features
+## Why This Project Matters
 
-- Loads and preprocesses multiple MovieLens datasets
-- Supports configurable execution on MovieLens 100K, 1M, and 10M
-- Implements Confidence-Aware Similarity Measure (CASM)
-- Implements Matrix Factorization using Stochastic Gradient Descent
-- Combines collaborative filtering and matrix factorization in a hybrid prediction model
-- Uses user-item rating dictionaries for efficient recommendation logic
-- Generates Top-N movie recommendations
-- Supports incremental update logic for new user-item interactions
-- Evaluates rating prediction using RMSE and MAE
-- Evaluates ranking quality using Precision@K, Recall@K, NDCG@K, MRR@K, and F1@K
-- Saves experiment results into `results/metrics.csv`
-- Generates metric visualizations in `results/figures`
-- Includes an interactive Streamlit recommendation demo
-- Keeps raw and processed datasets out of GitHub using `.gitignore`
+Traditional collaborative filtering methods suffer from several limitations:
+
+- Data sparsity
+- Cold-start problems
+- Scalability issues
+- Expensive similarity recomputation
+- Unreliable similarity values when users share few common ratings
+- Difficulty adapting to new user-item interactions
+
+This project addresses these problems by combining confidence-aware similarity weighting, matrix factorization, and incremental update logic.
+
+---
+
+## Key Contributions
+
+### 1. Confidence-Aware Similarity Measure
+
+The project uses a confidence-aware similarity approach inspired by the thesis methodology.
+
+Instead of relying only on raw Pearson similarity, similarity is adjusted using multiple confidence factors:
+
+- Pearson correlation core
+- Common-rating support
+- Jaccard overlap
+- User expertise / rating activity
+
+This helps reduce unreliable similarity scores when users have very few co-rated items.
+
+Conceptually:
+
+```text
+Final Similarity = Pearson Similarity × Support Confidence × Jaccard Confidence × Expertise Weight
+```
+
+---
+
+### 2. Collaborative Filtering
+
+The project applies user-based collaborative filtering to identify similar users and generate recommendations based on neighbor preferences.
+
+General workflow:
+
+```text
+User-item ratings
+   ↓
+User similarity calculation
+   ↓
+Top similar users
+   ↓
+Weighted rating prediction
+   ↓
+Recommendation list
+```
+
+---
+
+### 3. Matrix Factorization
+
+Matrix Factorization is used to learn latent user and item representations.
+
+The project uses SGD-based optimization to estimate hidden factors behind user preferences and item characteristics.
+
+General idea:
+
+```text
+Rating ≈ User latent vector × Item latent vector
+```
+
+Matrix Factorization helps improve predictions in sparse rating matrices.
+
+---
+
+### 4. Hybrid Prediction
+
+The recommender combines Collaborative Filtering and Matrix Factorization predictions.
+
+Hybrid recommendation systems can be more robust because they combine neighborhood-based information with latent factor modeling.
+
+Conceptually:
+
+```text
+Final Prediction = α × CF Prediction + (1 - α) × MF Prediction
+```
+
+---
+
+### 5. Incremental Update Logic
+
+Traditional collaborative filtering can require expensive full similarity recomputation when new ratings arrive.
+
+This project includes incremental update logic to update affected similarity relationships instead of recomputing the entire similarity matrix.
+
+Conceptually:
+
+```text
+New rating arrives
+   ↓
+Identify affected user/item relationships
+   ↓
+Update relevant similarities
+   ↓
+Refresh recommendations
+```
+
+This reflects the scalability motivation behind the thesis work.
+
+---
+
+## Dataset
+
+The project uses the MovieLens dataset.
+
+The demo version is based on MovieLens-style ratings data with:
+
+| Metric | Value |
+|---|---:|
+| Ratings | 100,000 |
+| Users | 943 |
+| Items | 1,682 |
+| Sparsity | 93.70% |
+
+The raw dataset is excluded from GitHub using `.gitignore`.
+
+Expected raw data location:
+
+```text
+data/raw/
+```
 
 ---
 
@@ -57,10 +168,6 @@ movie-recommender-system/
 │
 ├── data/
 │   ├── raw/
-│   │   ├── ml-100k/
-│   │   ├── ml-1m/
-│   │   └── ml-10m/
-│   │
 │   └── processed/
 │
 ├── notebooks/
@@ -72,18 +179,21 @@ movie-recommender-system/
 │   │
 │   └── metrics.csv
 │
+├── screenshots/
+│   └── recommender_app_overview.png
+│
 ├── src/
 │   ├── __init__.py
 │   ├── config.py
 │   ├── data_loader.py
-│   ├── evaluation.py
-│   ├── matrix_factorization.py
 │   ├── prepare_datasets.py
 │   ├── preprocessing.py
-│   ├── recommender.py
 │   ├── similarity.py
-│   ├── utils.py
-│   └── visualization.py
+│   ├── recommender.py
+│   ├── matrix_factorization.py
+│   ├── evaluation.py
+│   ├── visualization.py
+│   └── utils.py
 │
 ├── .gitignore
 ├── main.py
@@ -93,97 +203,107 @@ movie-recommender-system/
 
 ---
 
-## Dataset
+## App Preview
 
-This project uses the MovieLens datasets published by GroupLens.
+The Streamlit demo allows users to enter a user ID and generate movie recommendations.
 
-Supported datasets:
-
-- MovieLens 100K
-- MovieLens 1M
-- MovieLens 10M
-
-The datasets are not included in this repository because they are stored locally and excluded using `.gitignore`.
-
-Download the datasets from the official GroupLens website:
-
-```text
-https://grouplens.org/datasets/movielens/
-```
-
-After downloading and extracting them, place the files as follows:
-
-```text
-data/raw/ml-100k/u.data
-data/raw/ml-1m/ratings.dat
-data/raw/ml-10m/ratings.dat
-```
-
-Then prepare the datasets:
-
-```bash
-python src/prepare_datasets.py
-```
-
-This creates processed CSV files such as:
-
-```text
-data/processed/ratings_100k.csv
-data/processed/ratings_1m.csv
-data/processed/ratings_10m.csv
-```
+![Movie Recommender App Overview](screenshots/recommender_app_overview.png)
 
 ---
 
 ## Methodology
 
-### 1. Collaborative Filtering
+### 1. Data Loading
 
-The recommender uses user-item interactions to estimate user preferences. Similar users are identified based on shared rated items.
+MovieLens rating data is loaded from the raw data directory.
 
-### 2. CASM Similarity
-
-The Confidence-Aware Similarity Measure combines several components:
-
-- Pearson correlation
-- Support confidence
-- Jaccard overlap
-- User expertise weight
-
-This reduces the impact of unreliable similarities in sparse data.
-
-### 3. Matrix Factorization
-
-The project includes matrix factorization trained with Stochastic Gradient Descent. The model learns latent vectors for users and items and predicts ratings based on:
-
-- Global mean rating
-- User bias
-- Item bias
-- User latent factors
-- Item latent factors
-
-### 4. Hybrid Prediction
-
-The final rating prediction combines:
-
-- Baseline bias prediction
-- CASM-based collaborative filtering prediction
-- Matrix factorization prediction
-
-The hybrid prediction is controlled through configurable weights in `src/config.py`.
-
-### 5. Incremental Update Logic
-
-The project includes an incremental update mechanism. When a new rating is added, the system updates:
-
-- User-item interaction dictionary
-- Item-user interaction dictionary
-- CASM similarity cache for the affected user
-- Matrix factorization latent factors for the affected user-item pair
+The data includes user IDs, item IDs, ratings, and timestamps.
 
 ---
 
-## Evaluation Metrics
+### 2. Preprocessing
+
+The preprocessing stage prepares the user-item rating matrix.
+
+Main steps include:
+
+- Loading raw ratings
+- Cleaning and formatting columns
+- Creating user-item interaction matrix
+- Handling sparse user-item data
+- Preparing train/test splits
+
+---
+
+### 3. Confidence-Aware Similarity
+
+The system calculates user similarity using a confidence-aware approach.
+
+The similarity module considers:
+
+```text
+Pearson similarity
+Common item support
+Jaccard overlap
+User rating activity
+```
+
+This improves the reliability of similarity values in sparse recommender system settings.
+
+---
+
+### 4. Collaborative Filtering Prediction
+
+The Collaborative Filtering component predicts ratings based on similar users.
+
+General prediction logic:
+
+```text
+Target user
+   ↓
+Find similar users
+   ↓
+Select neighbors who rated the item
+   ↓
+Compute weighted rating prediction
+```
+
+---
+
+### 5. Matrix Factorization
+
+The Matrix Factorization component learns latent factors for users and items using SGD.
+
+It helps capture hidden patterns that may not be visible through neighborhood-based similarity alone.
+
+---
+
+### 6. Hybrid Recommendation
+
+The hybrid recommender combines:
+
+```text
+Collaborative Filtering prediction
+Matrix Factorization prediction
+```
+
+This provides more stable predictions than using either method alone.
+
+---
+
+### 7. Incremental Update Concept
+
+The project includes incremental update logic inspired by the thesis contribution.
+
+Instead of recomputing all similarities after every new rating, the incremental approach updates only affected similarity relationships.
+
+This helps address scalability challenges in dynamic recommender systems.
+
+---
+
+## Evaluation
+
+The project evaluates recommendation performance using both rating prediction metrics and ranking metrics.
 
 ### Rating Prediction Metrics
 
@@ -194,71 +314,56 @@ The project includes an incremental update mechanism. When a new rating is added
 
 - Precision@K
 - Recall@K
+- F1@K
 - NDCG@K
 - MRR@K
-- F1@K
 
-For ranking evaluation, the candidate set is built using relevant test items plus sampled negative candidates. This prevents ranking evaluation from becoming artificially zero when relevant items are not sampled.
+Evaluation outputs are saved in:
 
----
+```text
+results/metrics.csv
+```
 
-## Current Experimental Results
+Visualization outputs:
 
-The system was evaluated on MovieLens 100K, MovieLens 1M, and MovieLens 10M.
-
-For MovieLens 10M, the full dataset statistics are reported, while training and evaluation are performed in scalable sampled mode to keep the experiment feasible on a local laptop.
-
-### Dataset Statistics
-
-| Dataset | Ratings | Users | Items | Sparsity | Train Rows Used | Test Rows Used |
-|---|---:|---:|---:|---:|---:|---:|
-| MovieLens 100K | 100,000 | 943 | 1,682 | 93.69% | 80,000 | 20,000 |
-| MovieLens 1M | 1,000,209 | 6,040 | 3,706 | 95.53% | 800,167 | 200,042 |
-| MovieLens 10M | 10,000,054 | 69,878 | 10,677 | 98.66% | 1,000,000 | 50,000 |
-
-### Rating Prediction Results
-
-| Dataset | RMSE | MAE | Sample Size |
-|---|---:|---:|---:|
-| MovieLens 100K | 0.9061 | 0.7195 | 1,000 |
-| MovieLens 1M | 0.8974 | 0.7124 | 2,000 |
-| MovieLens 10M | 0.9181 | 0.7099 | 1,000 |
-
-### Ranking Results at K=10
-
-| Dataset | Precision@10 | Recall@10 | NDCG@10 | MRR@10 | F1@10 | Evaluated Users | Eligible Users |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| MovieLens 100K | 0.1080 | 0.0779 | 0.1269 | 0.2343 | 0.0767 | 50 | 920 |
-| MovieLens 1M | 0.2020 | 0.1471 | 0.2208 | 0.3660 | 0.1433 | 50 | 5,994 |
-| MovieLens 10M | 0.0650 | 0.3381 | 0.2201 | 0.2342 | 0.0998 | 20 | 17,120 |
-
-### MovieLens 10M Scalable Evaluation Setup
-
-MovieLens 10M is highly sparse, with approximately 98.66% sparsity.
-
-To make the experiment feasible on a local laptop, this project uses a scalable sampled training and evaluation setup for 10M:
-
-- Full dataset loaded for statistics
-- 1,000,000 training rows used
-- 50,000 test rows used
-- 3 matrix factorization epochs
-- Ranking evaluation uses relevant test items plus sampled negative candidates
-- 17,120 eligible users identified for ranking evaluation
-- 20 users sampled for final ranking evaluation
-
-This setup demonstrates that the implementation can handle large-scale MovieLens data while remaining executable in a portfolio environment.
+```text
+results/figures/rating_metrics.png
+results/figures/ranking_metrics_at_10.png
+```
 
 ---
 
 ## Result Visualizations
 
-Rating prediction metrics:
+### Rating Metrics
 
 ![Rating Metrics](results/figures/rating_metrics.png)
 
-Ranking metrics at K=10:
+### Ranking Metrics at 10
 
-![Ranking Metrics at K=10](results/figures/ranking_metrics_at_10.png)
+![Ranking Metrics at 10](results/figures/ranking_metrics_at_10.png)
+
+---
+
+## Streamlit Demo
+
+Run the Streamlit app:
+
+```bash
+streamlit run app/streamlit_app.py
+```
+
+The app shows:
+
+- Dataset information
+- Number of ratings
+- Number of users
+- Number of items
+- Sparsity level
+- User ID input
+- Number of recommendations selector
+- Generated movie recommendation list
+- Project components
 
 ---
 
@@ -271,7 +376,7 @@ git clone https://github.com/Zahra-ziaee/movie-recommender-system.git
 cd movie-recommender-system
 ```
 
-### 2. Create and activate a virtual environment
+### 2. Create and activate virtual environment
 
 Windows PowerShell:
 
@@ -286,68 +391,47 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### 4. Prepare the datasets
+### 4. Add dataset
 
-Make sure the MovieLens files are placed in the correct folders, then run:
+Place the MovieLens raw data files in:
 
-```bash
-python src/prepare_datasets.py
+```text
+data/raw/
 ```
 
-### 5. Run the project
-
-Run on MovieLens 100K:
+### 5. Run the full pipeline
 
 ```bash
-python main.py --dataset 100K
+python main.py
 ```
 
-Run on MovieLens 1M:
-
-```bash
-python main.py --dataset 1M
-```
-
-Run on MovieLens 10M:
-
-```bash
-python main.py --dataset 10M
-```
-
----
-
-## Streamlit Demo
-
-Run the interactive recommendation demo:
+### 6. Run the Streamlit app
 
 ```bash
 streamlit run app/streamlit_app.py
 ```
 
-The demo allows users to enter a user ID and generate Top-N movie recommendations using the hybrid CASM-CF and Matrix Factorization recommender.
-
 ---
 
-## Experiment Tracking
+## Outputs
 
-Each experiment run is saved into:
+Running the project generates:
 
 ```text
 results/metrics.csv
+results/figures/rating_metrics.png
+results/figures/ranking_metrics_at_10.png
 ```
 
-The file includes:
+---
 
-- Timestamp
-- Dataset name
-- Model name
-- RMSE
-- MAE
-- Ranking metrics
-- Evaluated users
-- Eligible users
+## Business / Research Insights
 
-This makes the project easier to reproduce, compare, and extend.
+- Confidence-aware similarity helps reduce unreliable neighbor relationships in sparse rating data.
+- Matrix Factorization captures latent user-item preference patterns.
+- Hybrid CF + MF prediction improves robustness compared with a single recommendation method.
+- Incremental update logic supports scalability in dynamic recommender systems.
+- Ranking metrics provide a more realistic view of recommendation quality than rating metrics alone.
 
 ---
 
@@ -355,43 +439,60 @@ This makes the project easier to reproduce, compare, and extend.
 
 Completed:
 
-- Project structure
-- GitHub setup
-- MovieLens 100K, 1M, and 10M support
-- Data preparation scripts
-- Data loading and train/test split
-- Configurable dataset selection
-- CASM similarity engine
-- Matrix Factorization with SGD
-- Hybrid CF + MF prediction
+- MovieLens data loading
+- Rating matrix creation
+- Confidence-aware similarity calculation
+- Collaborative Filtering recommender
+- Matrix Factorization model
+- Hybrid prediction logic
+- Incremental update concept
 - Rating prediction evaluation
 - Ranking metrics evaluation
-- Incremental update logic
-- Experiment tracking with CSV logging
-- Result visualizations
-- Streamlit recommendation demo
+- Result visualization
+- Streamlit demo
+- App screenshot in README
+- GitHub-ready structure
 
 Planned next steps:
 
-- Add more advanced candidate generation
-- Add item metadata and movie titles to the Streamlit demo
-- Add notebook-based exploratory data analysis
-- Add model comparison with baseline recommenders
-- Add optional FastAPI endpoint
+- Add movie title metadata to recommendations
+- Add item-based collaborative filtering
+- Add larger MovieLens dataset support
+- Add more detailed incremental update benchmarking
+- Add API endpoint for recommendations
 - Add Docker support
+- Add automated tests
+- Add GitHub Actions workflow
 
 ---
 
 ## Technologies Used
 
 - Python
-- NumPy
 - Pandas
+- NumPy
 - Scikit-learn
-- Matplotlib
 - Streamlit
+- Matplotlib
+- Collaborative Filtering
+- Matrix Factorization
+- Recommender Systems
 - Git
 - GitHub
+
+---
+
+## Resume Summary
+
+```text
+Movie Recommender System | Python, Collaborative Filtering, Matrix Factorization, Streamlit
+
+- Built a thesis-based movie recommender system using confidence-aware collaborative filtering, matrix factorization, hybrid prediction, and incremental update logic.
+- Implemented user similarity calculation with confidence weighting to improve reliability in sparse rating data.
+- Combined neighborhood-based collaborative filtering with matrix factorization for more robust rating prediction and recommendation generation.
+- Evaluated the system using RMSE, MAE, Precision@K, Recall@K, F1@K, NDCG@K, and MRR@K.
+- Built a Streamlit demo to generate top-N movie recommendations for selected users.
+```
 
 ---
 
@@ -400,4 +501,4 @@ Planned next steps:
 Zahra Ziaee
 
 MSc Computer Science - Data Mining  
-Focus: Recommender Systems, Collaborative Filtering, Incremental Learning, Matrix Factorization, and Scalable Machine Learning
+Thesis Focus: Incremental Collaborative Filtering, Confidence-Aware Similarity, Hybrid Recommendation Systems, and Scalable Recommender Systems
