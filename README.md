@@ -482,7 +482,7 @@ Planned next steps:
 
 ---
 
-## Resume Summary
+## Key Takeaways
 
 ```text
 Movie Recommender System | Python, Collaborative Filtering, Matrix Factorization, Streamlit
